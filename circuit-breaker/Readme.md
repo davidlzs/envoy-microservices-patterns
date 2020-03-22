@@ -1,9 +1,12 @@
+# create a dedicated network
+docker network create --subnet 172.20.0.0/16 --ip-range 172.20.240.0/20 circuit-breaker-network
+
 # run httpbin
-docker run -it --name httpbin --rm docker.io/kennethreitz/httpbin sh -c "gunicorn --access-logfile - -b 0.0.0.0:8080 httpbin:app"
+docker run -it --net=circuit-breaker-network --ip 172.20.128.1 --name httpbin --rm docker.io/kennethreitz/httpbin sh -c "gunicorn --access-logfile - -b 0.0.0.0:8080 httpbin:app"
 
 
 # run httpbin client and envoy
-docker run -d --env-file "./circuit-breaker/http-client.env" --link httpbin --name client -p 15001:15001 -v "$(pwd)/circuit-breaker/conf":/etc/envoy ceposta/http-envoy-client:latest
+docker run -d --net=circuit-breaker-network --ip 172.20.128.1 --env-file "./circuit-breaker/http-client.env" --name client -p 15001:15001 -v "${pwd}/circuit-breaker/conf":/etc/envoy ceposta/http-envoy-client:latest
 
 
 # add in runtime config
